@@ -1,45 +1,39 @@
 # DVTAG
 
-A command-line tool designed to tag your doujin voice library.
+Command-line tagger for doujin voice libraries. Point it at a folder tree that contains DLSite work numbers (RJ/BJ/VJ) in folder names and it will fetch metadata, write tags, and optionally transcode wav files.
 
-## How DVTAG Works
+## What it does
+- Recursively finds directories whose names include `RJxxxxxx`, `BJxxxxxx`, or `VJxxxxxx` (6 or 8 digits) and treats each as a release.
+- Scrapes metadata from DLSite and refines title/cover details via Chobit when possible.
+- Writes tags for FLAC, M4A, and MP3 (album, date, circle, seiyu, genres, cover, track/disc numbers).
+- Tries to strip numbering prefixes from track titles based on filename patterns.
+- Optional: transcode `.wav` to `.flac` or `.mp3` using ffmpeg, deleting the source wavs after success.
 
-DVTAG operates by recursively searching the directory specified by the user. This directory can be a relative path, or even the current directory. It looks for all directories that have a work number in their names.
-
-A work number is a unique identifier from the product link on dlsite, in the format of `RJxxxxxx`, `BJxxxxxx`, or `VJxxxxxx`, where `xxxxxx` can be either 6 or 8 digits.
-
-For every supported audio file format found inside each of these directories, DVTAG uses the corresponding work number to fetch metadata from the web. It then tags the audio files with this metadata.
+## Requirements
+- Python 3.9+
+- ffmpeg on PATH (only needed when using transcoding flags)
+- Network access to dlsite.com and chobit.cc
 
 ## Installation
 
-DVTAG requires Python 3.9 or higher. You can install it using pip or pipx:
+```bash
+pip install dvtag            # or: pipx install dvtag
+pip install --upgrade dvtag  # upgrade (pipx upgrade dvtag)
+```
+
+## Quick start
+1) Ensure each release folder name contains a work number (e.g., `RJ123456`, `rj123456 bonus`, `xxx_RJ01123456`).
+2) Run:
 
 ```bash
-pip install dvtag
+dvtag /path/to/your/library        # tag in place
+dvtag -w2f /path/to/your/library   # tag + transcode wav -> flac
+dvtag -w2m /path/to/your/library   # tag + transcode wav -> mp3 (320k)
 ```
 
-or 
-
-```bash
-pipx install dvtag
-```
-
-To upgrade DVTAG, use:
-
-```bash
-pip install --upgrade dvtag
-```
-
-or
-
-```bash
-pipx upgrade dvtag
-```
-
-## Usage
+## CLI reference
 
 ```
-$ dvtag -h
 usage: dvtag [-h] [-v] [-w2f] [-w2m] dirpath
 
 Doujin Voice Tagging Tool (tagging in place)
@@ -52,23 +46,21 @@ options:
   -v, --version  show program's version number and exit
   -w2f           transcode all wav files to flac [LOSELESS]
   -w2m           transcode all wav files to mp3
-
 ```
 
-Please ensure that every doujin voice folder name contains a specific work number format - like `RJ123123`, `rj123123 xxx`, `xxxx RJ01123123`, `BJ01123123`, `VJ123123`, etc.
+## How it works (and current quirks)
+- **Discovery**: walks the given directory; once a folder with a work number is found, tagging happens inside it instead of recursing deeper.
+- **Metadata**: pulls work name, circle, seiyu, genres, sale date, cover from DLSite; Chobit is queried for a potentially shorter title and a square thumbnail if available.
+- **Cover choice**: currently prefers the Chobit square thumbnail, but some releases look better with the standard DLSite cover (usually landscape). A user-selectable preference is a known need.
+- **Genre order**: genres are kept in the order returned by DLSite. The tag comparison logic may still rewrite files when the same genres appear in a different order; smarter equality is on the roadmap.
+- **Track titles**: attempts to remove numeric prefixes from filenames when they follow common track-number patterns; otherwise uses the raw stem.
+- **Logging**: minimal console logging; improving verbosity/structure is planned.
+- **Idempotency**: tags are only written when they differ from existing tags, but the gaps above can still cause redundant writes.
 
-To tag your library, use the `dvtag` command:
+## Current limitations and ideas
+- **Caching**: no cache; repeated runs on large libraries hit DLSite/Chobit every time, slowing execution and adding load. Add a local metadata cache with expiry.
+- **Genre/tag comparison**: treat genre lists as sets (or configurable) to avoid unnecessary rewrites while preserving source order.
+- **Logging and observability**: structured logs, progress, and clearer error handling.
 
-```bash
-dvtag /path/to/your/library
-```
-
-## Transcoding
-
-Transcoding is an additional functionality of DVTAG. If you have `wav` audio files and you want to convert these all to `flac` or `mp3`, run with option `-w2f` or `-w2m`. For example:
-
-```bash
-dvtag -w2f /path/to/your/library
-```
-
-Please note that transcoding depends on ffmpeg and users seeking additional related features should use the ffmpeg tool directly.
+## License
+[MIT](LICENSE)
