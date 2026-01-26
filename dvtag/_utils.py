@@ -23,8 +23,8 @@ from requests.adapters import HTTPAdapter, Retry
 
 _workno_pat = re.compile(r"(R|B|V)J\d{6}(\d\d)?", flags=re.IGNORECASE)
 
-_low_rx = re.compile(r"特典|おまけ|フリートーク")
-_high_rx = re.compile(r"本編")
+_low_rx = re.compile(r"特典|おまけ|omake|間限定|フリートーク")
+_high_rx = re.compile(r"本編|通常版")
 
 
 def _walk(basepath: Path):
