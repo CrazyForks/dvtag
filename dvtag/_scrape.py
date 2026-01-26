@@ -51,7 +51,7 @@ def scrape(workno: str) -> DoujinVoice:
         for seiyu_html in re.finditer(r"<a[\s\S]*?>(.+?)<", seiyu_list_html):
             seiyus.append(unescape(seiyu_html.group(1)))
 
-    genres = [unescape(m[1]) for m in re.finditer(r'work\.genre">(.+)\</a>', html)]
+    genres = [unescape(m[1]) for m in re.finditer(r"work\.genre/ana_flg/all\">(.+)\</a>", html)]
 
     if m := re.search(r"www\.dlsite\.com/.*?/new/=/year/([0-9]{4})/mon/([0-9]{2})/day/([0-9]{2})/", html):
         sale_date = "{}-{}-{}".format(m.group(1), m.group(2), m.group(3))
